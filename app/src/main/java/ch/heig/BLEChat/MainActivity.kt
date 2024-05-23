@@ -3,8 +3,11 @@ package ch.heig.BLEChat
 import android.app.AlertDialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.InputType
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -12,15 +15,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ch.heig.BLEChat.Model.Message
+import com.google.android.gms.nearby.connection.Strategy
 
 
-class MainActivity : AppCompatActivity() {
-    private var recyclerViewMessages: RecyclerView? = null
-    private var editTextMessage: EditText? = null
-    private var buttonSend: Button? = null
+class MainActivity : AppCompatActivity(), BluetoothHelperListener {
+    private lateinit var recyclerViewMessages: RecyclerView
+    private lateinit var editTextMessage: EditText
+    private lateinit var buttonSend: Button
     private var messageList: MutableList<Message> = ArrayList()
     private var messageAdapter: MessageAdapter = MessageAdapter(messageList)
-    private var username: String? = null
+    private lateinit var username: String
+
+    private lateinit var bluetoothHelper: BluetoothHelper
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -31,18 +37,29 @@ class MainActivity : AppCompatActivity() {
         editTextMessage = findViewById<EditText>(R.id.editTextMessage)
         buttonSend = findViewById<Button>(R.id.buttonSend)
 
-        recyclerViewMessages?.setLayoutManager(LinearLayoutManager(this))
-        recyclerViewMessages?.setAdapter(messageAdapter)
-        buttonSend?.setOnClickListener(View.OnClickListener {
-            val message = editTextMessage?.text.toString().trim { it <= ' ' }
+        recyclerViewMessages.setLayoutManager(LinearLayoutManager(this))
+        recyclerViewMessages.setAdapter(messageAdapter)
+        buttonSend.setOnClickListener(View.OnClickListener {
+            val message = editTextMessage.text.toString().trim { it <= ' ' }
             if (message.isNotEmpty()) {
-                messageList.add(Message(username!!, message))
+                messageList.add(Message(username, message))
                 messageAdapter.notifyItemInserted(messageList.size - 1)
-                recyclerViewMessages?.scrollToPosition(messageList.size - 1)
-                editTextMessage?.setText("")
+                recyclerViewMessages.scrollToPosition(messageList.size - 1)
+                editTextMessage.setText("")
             }
         })
+
+        bluetoothHelper = BluetoothHelper(this, this)
+
+        bluetoothHelper.startAdvertising(Strategy.P2P_CLUSTER)
+        bluetoothHelper.startDiscovery(Strategy.P2P_CLUSTER)
     }
+    override fun onDestroy() {
+        super.onDestroy()
+        bluetoothHelper.stopDiscovery()
+        bluetoothHelper.stopAdvertising()
+    }
+
     private fun promptForUsername() {
         val builder: AlertDialog.Builder = AlertDialog.Builder(this)
         builder.setTitle("Enter your username")
@@ -51,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         builder.setView(input)
         builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
             username = input.text.toString().trim { it <= ' ' }
-            if (username!!.isEmpty()) {
+            if (username.isEmpty()) {
                 username = "Anonymous"
             }
             Toast.makeText(this@MainActivity, "Username set to: $username", Toast.LENGTH_SHORT)
@@ -59,6 +76,11 @@ class MainActivity : AppCompatActivity() {
         })
         builder.setCancelable(false)
         builder.show()
+    }
+
+    override fun onMessageReceived(message: Message) {
+        // Handle received message and update UI
+        messageList.add(message)
     }
 }
 
