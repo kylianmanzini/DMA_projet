@@ -3,4 +3,7 @@
     <string name="type_a_message">Type a message</string>
     <string name="send">Send</string>
     <string name="sample_message">Sample message</string>
+    <string name="author">Author</string>
+    <string name="content">Content</string>
+    <string name="messageSeparator">:</string>
 </resources>
