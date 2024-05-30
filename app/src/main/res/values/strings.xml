@@ -6,4 +6,6 @@
     <string name="author">Author</string>
     <string name="content">Content</string>
     <string name="messageSeparator">:</string>
+    <string name="enter_message">Enter message</string>
+    <string name="send_string">Send</string>
 </resources>

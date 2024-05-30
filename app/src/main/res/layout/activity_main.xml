@@ -5,42 +5,21 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- RecyclerView for displaying chat messages -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewMessages"
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_above="@id/layoutInput"
-        android:layout_alignParentTop="true"
-        android:padding="8dp"
-        tools:listitem="@layout/item_message" />
+        android:layout_height="match_parent" />
 
-    <!-- Layout for input field and send button -->
-    <LinearLayout
-        android:id="@+id/layoutInput"
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:orientation="horizontal"
-        android:padding="8dp">
+        android:layout_alignParentTop="true" />
 
-        <!-- EditText for typing messages -->
-        <EditText
-            android:id="@+id/editTextMessage"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="@string/type_a_message"
-            android:inputType="textMultiLine"
-            android:maxLines="4" />
-
-        <!-- Button for sending messages -->
-        <Button
-            android:id="@+id/buttonSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/send" />
-
-    </LinearLayout>
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/tabLayout" />
 
 </RelativeLayout>
