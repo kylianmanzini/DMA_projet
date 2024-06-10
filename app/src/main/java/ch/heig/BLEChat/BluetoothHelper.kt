@@ -27,7 +27,6 @@ class BluetoothHelper(
     private var payloadCallback: PayloadCallback? = null
 
     // List to keep track of connected endpoints Map of endpoint IDs to usernames
-    private val foundEndpoints = mutableMapOf<String,String>()
     private val connectedEndpoints = mutableMapOf<String,String>()
 
     // Initialize Nearby Connections client
@@ -35,7 +34,7 @@ class BluetoothHelper(
         endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
             override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                 val user = User(endpointId,info.endpointName)
-                foundEndpoints[endpointId] = info.endpointName
+                connectedEndpoints[endpointId] = info.endpointName
                 listener.onUserDiscovered(user)
 
                 showSystemMessage("User ${info.endpointName} found...")
@@ -53,8 +52,8 @@ class BluetoothHelper(
                 connectionsClient.disconnectFromEndpoint(endpointId)
                 Log.d("BluetoothHelper", "Disconnecting from: $endpointId")
 
-                showSystemMessage("User ${foundEndpoints[endpointId]} lost :(")
-                foundEndpoints.remove(endpointId)
+                showSystemMessage("User ${connectedEndpoints[endpointId]} lost :(")
+                connectedEndpoints.remove(endpointId)
                 listener.onUserDisconnected(endpointId)
                 Log.d("BluetoothHelper", "Endpoint lost: $endpointId")
             }
@@ -74,12 +73,11 @@ class BluetoothHelper(
                     // Connection established
                     Log.d("BluetoothHelper", "Connection established with: $endpointId")
                     // Add the endpoint to the list of connected endpoints
-                    connectedEndpoints[endpointId] = foundEndpoints[endpointId]!!
-                    showSystemMessage("User ${foundEndpoints[endpointId]} connected ! :)")
+                    showSystemMessage("User ${connectedEndpoints[endpointId]} connected ! :)")
                 } else {
                     // Connection failed
                     Log.d("BluetoothHelper", "Connection failed with: $endpointId")
-                    showSystemMessage("User ${foundEndpoints[endpointId]} failed to connect :(")
+                    showSystemMessage("User ${connectedEndpoints[endpointId]} failed to connect :(")
                 }
             }
 

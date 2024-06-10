@@ -1,7 +1,6 @@
 package ch.heig.BLEChat
 
 import android.Manifest
-import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -22,14 +21,20 @@ import ch.heig.BLEChat.Model.User
 import com.google.android.gms.nearby.connection.Strategy
 import com.google.android.material.tabs.TabLayout
 
-
 class MainActivity : AppCompatActivity(), BluetoothHelperListener {
 
     lateinit var bluetoothHelper: BluetoothHelper
     private lateinit var globalChatFragment: GlobalChatFragment
     private lateinit var nearbyUsersFragment: NearbyUsersFragment
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var username: String
+
+    private var _username: String = ""
+    var username: String
+        get() = _username
+        set(value) {
+            _username = value
+            onUsernameChanged(value)
+        }
 
     companion object {
         private const val REQUEST_BLUETOOTH_PERMISSIONS = 1
@@ -38,13 +43,7 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        sharedPreferences = getSharedPreferences("ChatApp", Context.MODE_PRIVATE)
-
-        username = sharedPreferences.getString("username", "Anonymous").toString()
-
         promptForUsername(username)
-        initializeApp()
     }
 
     private fun initializeApp() {
@@ -71,7 +70,7 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
             override fun getPageTitle(position: Int): CharSequence? {
                 return when (position) {
                     0 -> "Global Chat"
-                    else -> "Nearby Users"
+                    else -> "Private Chat"
                 }
             }
         }
@@ -79,17 +78,12 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
         viewPager.adapter = adapter
         tabLayout.setupWithViewPager(viewPager)
 
-
         // Check and request necessary permissions
         requestBluetoothPermissions()
-
     }
 
     private fun startBluetooth() {
         // Start advertising and discovery
-        sharedPreferences = getSharedPreferences("ChatApp", MODE_PRIVATE)
-        username = sharedPreferences.getString("username", "Anonymous").toString()
-
         bluetoothHelper.startAdvertising(Strategy.P2P_CLUSTER, username)
         bluetoothHelper.startDiscovery(Strategy.P2P_CLUSTER)
     }
@@ -102,30 +96,33 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
             .show()
     }
 
-    private fun promptForUsername(username: String){
+    private fun promptForUsername(currentUsername: String){
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Enter Username")
 
         val input = EditText(this)
         input.inputType = InputType.TYPE_CLASS_TEXT
-        input.setText(username)
+        input.setText(currentUsername)
         val filterArray = arrayOfNulls<InputFilter>(1)
         filterArray[0] = LengthFilter(64)
         input.filters = filterArray
         builder.setView(input)
 
-        sharedPreferences = getSharedPreferences("ChatApp", MODE_PRIVATE)
-
         builder.setPositiveButton("OK") { dialog, _ ->
-            this.username = input.text.toString().ifEmpty { "Anonymous" }
-            sharedPreferences.edit().putString("username", this.username).apply()
+            username = input.text.toString().ifEmpty { "Anonymous" }
             dialog.dismiss()
         }
 
-        Log.d("BLEChat", "Username: $username")
+        Log.d("BLEChat", "Prompting for username, current: $currentUsername")
 
         builder.setCancelable(false)
         builder.show()
+    }
+
+    private fun onUsernameChanged(newUsername: String) {
+        Log.d("BLEChat", "Username changed to: $newUsername")
+        // Add any logic you want to execute when the username changes
+        initializeApp()
     }
 
     override fun onDestroy() {
@@ -152,11 +149,10 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
         }
     }
 
-    fun openChatFragment(endpointId: String) {
-        val chatFragment = ChatFragment()
-        chatFragment.setEndpointId(endpointId)
+    fun openChatFragment(user: User) {
+        val userChatFragment = UserChatFragment(user)
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, chatFragment)
+            .replace(R.id.fragmentContainer, userChatFragment)
             .addToBackStack(null)
             .commit()
     }
@@ -194,7 +190,6 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
             startBluetooth()
         }
     }
-
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)

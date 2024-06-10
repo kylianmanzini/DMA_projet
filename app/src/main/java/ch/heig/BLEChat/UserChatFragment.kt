@@ -9,13 +9,18 @@ import android.widget.EditText
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ch.heig.BLEChat.Model.Message
+import ch.heig.BLEChat.Model.User
 
-class GlobalChatFragment : ChatFragment() {
+class UserChatFragment(private var user: User) :  ChatFragment() {
 
     private lateinit var messages: MutableList<Message>
-    private lateinit var adapter: MessageAdapter
+    private lateinit var privateMessages: MutableList<Message>
+    private lateinit var messagesAdapter: MessageAdapter
     private lateinit var bluetoothHelper: BluetoothHelper
-    private lateinit var recyclerView: RecyclerView
+
+
+    private lateinit var privateMessagesAdapter: MessageAdapter
+    private val privateMessagesList = mutableListOf<Message>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -24,23 +29,28 @@ class GlobalChatFragment : ChatFragment() {
         val view = inflater.inflate(R.layout.fragment_chat, container, false)
 
         messages = mutableListOf()
-        adapter = MessageAdapter(messages)
+        messagesAdapter = MessageAdapter(messages)
 
-        recyclerView = view.findViewById(R.id.chatsRecyclerView)
+        privateMessages = mutableListOf()
+        privateMessagesAdapter = MessageAdapter(privateMessagesList)
+
+
+        val recyclerView = view.findViewById<RecyclerView>(R.id.chatsRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        recyclerView.adapter = adapter
+        recyclerView.adapter = messagesAdapter
 
         val editTextMessage = view.findViewById<EditText>(R.id.editTextMessage)
         val buttonSend = view.findViewById<Button>(R.id.buttonSend)
 
-        // Get BluetoothHelper instance from MainActivity
         bluetoothHelper = (activity as MainActivity).bluetoothHelper
 
         buttonSend.setOnClickListener {
             val messageContent = editTextMessage.text.toString()
             if (messageContent.isNotEmpty()) {
                 val message = Message((activity as MainActivity).username, messageContent)
-                bluetoothHelper.sendMessageToGlobalChat(message)
+                user.endpointId.let {
+                    bluetoothHelper.sendMessage(it, message)
+                }
                 addMessageToChat(message)
                 editTextMessage.text.clear()
             }
@@ -55,7 +65,8 @@ class GlobalChatFragment : ChatFragment() {
 
     override fun addMessageToChat(message: Message) {
         messages.add(message)
-        adapter.notifyItemInserted(messages.size - 1)
-        recyclerView.scrollToPosition(messages.size - 1)
+        messagesAdapter.notifyItemInserted(messages.size - 1)
+        privateMessages.add(message)
+        privateMessagesAdapter.notifyItemInserted(privateMessages.size - 1)
     }
 }
