@@ -38,4 +38,11 @@ class NearbyUsersFragment : Fragment() {
         userList.add(user)
         userAdapter.notifyDataSetChanged()
     }
+
+    fun onUserDisconnected(endpointId: String) {
+        val index = userList.indexOfFirst { it.endpointId == endpointId }
+        if (index != -1) {
+            userList.removeAt(index)
+        }
+    }
 }

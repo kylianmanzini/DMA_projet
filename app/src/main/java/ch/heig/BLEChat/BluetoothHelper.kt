@@ -12,32 +12,43 @@ import com.google.android.gms.nearby.connection.*
 interface BluetoothHelperListener {
     fun onMessageReceived(message: Message)
     fun onUserDiscovered(user: User)
+    fun onUserDisconnected(endpointId: String)
 
 }
 
-class BluetoothHelper(private val context: Context, private val listener: BluetoothHelperListener) {
+class BluetoothHelper(
+    private val context: Context,
+    private val listener: BluetoothHelperListener,
+    private val connectionsClient: ConnectionsClient = Nearby.getConnectionsClient(context)
+) {
 
     private var endpointDiscoveryCallback: EndpointDiscoveryCallback? = null
     private var endpointConnectionCallback: ConnectionLifecycleCallback? = null
     private var payloadCallback: PayloadCallback? = null
 
-    private var connectionsClient: ConnectionsClient = Nearby.getConnectionsClient(context)
-    private val connectedEndpoints = mutableSetOf<String>() // List to keep track of connected endpoints
+    // List to keep track of connected endpoints Map of endpoint IDs to usernames
+    private val foundEndpoints = mutableMapOf<String,String>()
+    private val connectedEndpoints = mutableMapOf<String,String>()
 
     // Initialize Nearby Connections client
     init {
         endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
             override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                 val user = User(endpointId,info.endpointName)
+                foundEndpoints[endpointId] = info.endpointName
                 listener.onUserDiscovered(user)
                 connectToEndpoint(user)
-
+                showSystemMessage("User ${info.endpointName} found...")
                 Log.d("BluetoothHelper", "Endpoint found: $endpointId (${info.endpointName})")
+
             }
 
             override fun onEndpointLost(endpointId: String) {
                 // Handle lost endpoints if necessary
                 disconnectFromEndpoint(endpointId)
+                showSystemMessage("User ${foundEndpoints[endpointId]} lost :(")
+                foundEndpoints.remove(endpointId)
+                listener.onUserDisconnected(endpointId)
                 Log.d("BluetoothHelper", "Endpoint lost: $endpointId")
             }
         }
@@ -55,14 +66,19 @@ class BluetoothHelper(private val context: Context, private val listener: Blueto
                 if (result.status.isSuccess) {
                     // Connection established
                     Log.d("BluetoothHelper", "Connection established with: $endpointId")
+                    // Add the endpoint to the list of connected endpoints
+                    connectedEndpoints[endpointId] = foundEndpoints[endpointId]!!
+                    showSystemMessage("User ${foundEndpoints[endpointId]} connected ! :)")
                 } else {
                     // Connection failed
                     Log.d("BluetoothHelper", "Connection failed with: $endpointId")
+                    showSystemMessage("User ${foundEndpoints[endpointId]} failed to connect :(")
                 }
             }
 
             override fun onDisconnected(endpointId: String) {
                 // Handle disconnection
+                showSystemMessage("User ${connectedEndpoints[endpointId]} disconnected.")
                 connectedEndpoints.remove(endpointId)
                 Log.d("BluetoothHelper", "Disconnected from: $endpointId")
             }
@@ -154,7 +170,6 @@ class BluetoothHelper(private val context: Context, private val listener: Blueto
     fun connectToEndpoint(user: User) {
         connectionsClient.requestConnection(context.packageName, user.endpointId, endpointConnectionCallback!!)
 
-        connectedEndpoints.add(user.endpointId)
         sendMessage(user.endpointId, Message("System", "New user connected : ${user.username}"))
         Log.d("BluetoothHelper", "Connecting to: ${user.endpointId} (${user.username})")
     }
@@ -162,15 +177,14 @@ class BluetoothHelper(private val context: Context, private val listener: Blueto
     // Disconnect from a remote endpoint
     fun disconnectFromEndpoint(endpointId: String) {
         connectionsClient.disconnectFromEndpoint(endpointId)
-        connectedEndpoints.remove(endpointId)
         Log.d("BluetoothHelper", "Disconnecting from: $endpointId")
     }
 
     // Send a message to all connected endpoints (broadcast)
     fun sendMessageToGlobalChat(message: Message) {
         val payload = Payload.fromBytes("${message.author}:${message.content}".toByteArray())
-        connectedEndpoints.forEach { endpointId ->
-            connectionsClient.sendPayload(endpointId, payload)
+        connectedEndpoints.forEach { endpoint ->
+            connectionsClient.sendPayload(endpoint.key, payload)
         }
         Log.d("BluetoothHelper", "Messages sent to all connected endpoints : ${connectedEndpoints.size}")
     }
@@ -180,5 +194,10 @@ class BluetoothHelper(private val context: Context, private val listener: Blueto
         val payload = Payload.fromBytes("${message.author}:${message.content}".toByteArray())
         connectionsClient.sendPayload(endpointId, payload)
         Log.d("BluetoothHelper", "Message sent to: $endpointId")
+    }
+
+    // Show a message in the chat
+    fun showSystemMessage(content: String) {
+        listener.onMessageReceived(Message("[System]", content))
     }
 }

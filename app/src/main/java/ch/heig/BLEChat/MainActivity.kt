@@ -140,6 +140,12 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
         }
     }
 
+    override fun onUserDisconnected(endpointId: String) {
+        runOnUiThread {
+            nearbyUsersFragment.onUserDisconnected(endpointId)
+        }
+    }
+
     fun openChatFragment(endpointId: String) {
         val chatFragment = ChatFragment()
         chatFragment.setEndpointId(endpointId)

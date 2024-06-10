@@ -9,6 +9,9 @@ appcompat = "1.6.1"
 material = "1.11.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
+mockitoCore = "2.8.47"
+mockitoCoreVersion = "5.12.0"
+mockitoKotlin = "5.3.1"
 playServicesNearby = "20.1.0"
 playServicesNearbyVersion = "19.2.0"
 
@@ -21,6 +24,9 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
+mockito-core-v5120 = { module = "org.mockito:mockito-core", version.ref = "mockitoCoreVersion" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 play-services-nearby = { module = "com.google.android.gms:play-services-nearby", version.ref = "playServicesNearby" }
 gms-play-services-nearby = { group = "com.google.android.gms", name = "play-services-nearby", version.ref = "playServicesNearbyVersion" }
 
