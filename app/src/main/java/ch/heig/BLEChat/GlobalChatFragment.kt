@@ -20,6 +20,7 @@ class GlobalChatFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var bluetoothHelper: BluetoothHelper
     private lateinit var username: String
+    private lateinit var recyclerView: RecyclerView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,7 +33,7 @@ class GlobalChatFragment : Fragment() {
         messages = mutableListOf()
         adapter = MessageAdapter(messages)
 
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
@@ -63,5 +64,6 @@ class GlobalChatFragment : Fragment() {
     private fun addMessageToChat(message: Message) {
         messages.add(message)
         adapter.notifyItemInserted(messages.size - 1)
+        recyclerView.scrollToPosition(messages.size - 1)
     }
 }

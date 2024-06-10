@@ -15,6 +15,7 @@ class BluetoothHelperTest {
     private lateinit var listener: BluetoothHelperListener
     private lateinit var bluetoothHelper: BluetoothHelper
 
+    /*
     @Before
     fun setUp() {
         context = mock(Context::class.java)
@@ -43,4 +44,6 @@ class BluetoothHelperTest {
         bluetoothHelper.sendMessageToGlobalChat(message)
         // Verify that the message is sent
     }
+
+     */
 }

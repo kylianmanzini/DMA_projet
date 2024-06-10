@@ -36,6 +36,7 @@ class NearbyUsersFragment : Fragment() {
 
     fun onUserDiscovered(user: User) {
         userList.add(user)
+        userAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, userList.map { it.username })
         userAdapter.notifyDataSetChanged()
     }
 

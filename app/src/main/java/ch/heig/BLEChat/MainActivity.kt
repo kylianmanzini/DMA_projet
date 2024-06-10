@@ -1,9 +1,12 @@
 package ch.heig.BLEChat
 
+import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.InputFilter.LengthFilter
 import android.text.InputType
 import android.util.Log
 import android.widget.EditText
@@ -18,7 +21,7 @@ import ch.heig.BLEChat.Model.Message
 import ch.heig.BLEChat.Model.User
 import com.google.android.gms.nearby.connection.Strategy
 import com.google.android.material.tabs.TabLayout
-import android.Manifest
+
 
 class MainActivity : AppCompatActivity(), BluetoothHelperListener {
 
@@ -106,6 +109,9 @@ class MainActivity : AppCompatActivity(), BluetoothHelperListener {
         val input = EditText(this)
         input.inputType = InputType.TYPE_CLASS_TEXT
         input.setText(username)
+        val filterArray = arrayOfNulls<InputFilter>(1)
+        filterArray[0] = LengthFilter(64)
+        input.filters = filterArray
         builder.setView(input)
 
         sharedPreferences = getSharedPreferences("ChatApp", MODE_PRIVATE)
